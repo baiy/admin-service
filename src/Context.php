@@ -9,6 +9,7 @@ use Baiy\Cadmin\Model\User;
 use Baiy\Cadmin\Model\UserGroupRelate;
 use Baiy\Cadmin\Model\UserRelate;
 use Exception;
+use Psr\Http\Message\ServerRequestInterface;
 use Throwable;
 
 class Context
@@ -20,33 +21,15 @@ class Context
     /** @var Response */
     private $response;
 
-    // 监听sql执行数据
-    private $listenSql = [];
     // 请求配置信息
     private $requestConfig = [];
     // 当前用户信息
     private $user = [];
 
-    /** @var Db 数据库操作对象 */
-    private $db;
-
-    public function __construct(Admin $admin)
+    public function __construct(ServerRequestInterface $request, Admin $admin)
     {
-        $this->admin = $admin;
-
-        $this->initializeRequest();
-
-        // 初始化数据库对象
-        $this->db = new Db(['database_type' => 'mysql', 'pdo' => $this->admin->getPdo()]);
-    }
-
-    private function initializeRequest()
-    {
-        $this->request = new Request();
-        $this->request->setClientIp(Helper::ip());
-        $this->request->setMethod(strtoupper($_SERVER['REQUEST_METHOD']));
-        $this->request->setUrl(Helper::url());
-        $this->request->setInput(array_merge($_GET ?? [], $_POST ?? []));
+        $this->admin   = $admin;
+        $this->request = new Request($request);
     }
 
     /**
@@ -66,19 +49,7 @@ class Context
             $this->response = new Response('error', $e->getMessage(), $e->getTrace());
         }
 
-        // 记录日志
-        $this->logRecord($this->response);
-
         return $this->response;
-    }
-
-    /**
-     * @param  string  $sql  执行Sql
-     * @param  mixed  $time  执行时间
-     */
-    public function addListenSql($sql, $time): void
-    {
-        $this->listenSql[] = compact('sql', 'time');
     }
 
     public function getUser(): array
@@ -111,28 +82,12 @@ class Context
     }
 
     /**
-     * @return Db
-     */
-    public function getDb(): Db
-    {
-        return $this->db;
-    }
-
-    /**
-     * @return array
-     */
-    public function getListenSql(): array
-    {
-        return $this->listenSql;
-    }
-
-    /**
      * 初始化请求数据
      * @throws Exception
      */
     private function initRequest()
     {
-        $action = $this->getRequest()->input(Admin::instance()->getInputActionName());
+        $action = $this->getRequest()->input($this->admin->getInputActionName());
         if (empty($action)) {
             throw new Exception("action参数错误");
         }
@@ -150,7 +105,7 @@ class Context
      */
     private function initUser()
     {
-        $token = $this->getRequest()->input(Admin::instance()->getInputTokenName());
+        $token = $this->getRequest()->input($this->admin->getInputTokenName());
         if (empty($token)) {
             return;
         }
@@ -175,7 +130,7 @@ class Context
     private function checkAccess()
     {
         $requestId = $this->requestConfig['id'];
-        if (in_array($requestId, Admin::instance()->getNoCheckLoginRequestIds())) {
+        if (in_array($requestId, $this->admin->getNoCheckLoginRequestIds())) {
             return;
         }
 
@@ -187,7 +142,7 @@ class Context
             throw new Exception("用户已被禁用");
         }
 
-        if (in_array($requestId, Admin::instance()->getOnlyLoginRequestIds())) {
+        if (in_array($requestId, $this->admin->getOnlyLoginRequestIds())) {
             return;
         }
 
@@ -208,12 +163,12 @@ class Context
 
     private function dispatch()
     {
-        $dispatcher = Admin::instance()->getDispatcher($this->requestConfig['type']);
+        $dispatcher = $this->admin->getDispatcher($this->requestConfig['type']);
         return $dispatcher->execute($this);
     }
 
-    private function logRecord()
+    public function getAdmin(): Admin
     {
-        Admin::instance()->log(new Log($this));
+        return $this->admin;
     }
 }

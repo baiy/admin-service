@@ -12,14 +12,14 @@ class MenuRelate extends Base
 
     public function authIds($id)
     {
-        return $this->db->select(self::table(), 'admin_auth_id', [
+        return $this->db()->select(self::table(), 'admin_auth_id', [
             'admin_menu_id' => $id
         ]) ?: [];
     }
 
     public function menuIds($id)
     {
-        return $this->db->select(self::table(), 'admin_menu_id', [
+        return $this->db()->select(self::table(), 'admin_menu_id', [
             'admin_auth_id' => $id
         ]) ?: [];
     }

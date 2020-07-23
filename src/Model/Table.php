@@ -2,7 +2,7 @@
 
 namespace Baiy\Cadmin\Model;
 
-use Baiy\Cadmin\Admin;
+use Baiy\Cadmin\Db;
 use Baiy\Cadmin\Helper;
 
 trait Table
@@ -16,7 +16,7 @@ trait Table
     public static function table()
     {
         if (!static::$table) {
-            static::$table = Admin::instance()->getTablePrefix().Helper::parseTableName(static::class);
+            static::$table = Db::getTablePrefix().Helper::parseTableName(static::class);
         }
         return static::$table;
     }

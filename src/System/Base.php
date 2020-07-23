@@ -15,7 +15,7 @@ class Base
     public function __construct($adminContext)
     {
         $this->context = $adminContext;
-        $this->db      = $this->context->getDb();
+        $this->db      = Db::instance();
     }
 
     public function page($table, $where = [], $order = "")

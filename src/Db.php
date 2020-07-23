@@ -2,19 +2,52 @@
 
 namespace Baiy\Cadmin;
 
+use Closure;
 use Medoo\Medoo;
+use PDO;
+use Swoole\Coroutine;
 
 class Db extends Medoo
 {
-    // 重写执行方法 方便记录sql
-    public function exec($query, $map = [])
+    private static $_pdo;
+    /** @var Db[] */
+    private static $instances = [];
+
+    private static $tablePrefix = "";
+
+    /**
+     * @param  PDO|Closure  $pdo
+     */
+    public static function initialize($pod, $tablePrefix)
     {
-        $startTime = microtime(true);
-        $result = parent::exec($query, $map);
-        Admin::instance()->getContext()->addListenSql(
-            $this->generate($query, $map),
-            number_format((microtime(true) - $startTime), 6)
-        );
-        return $result;
+        self::$_pdo        = $pod;
+        self::$tablePrefix = $tablePrefix;
+    }
+
+    /**
+     * @return Db
+     */
+    public static function instance()
+    {
+        $key = 0;
+        if (extension_loaded('swoole') && Coroutine::getCid() > 0) {
+            $key = Coroutine::getCid();
+            Coroutine::defer(function () use ($key) {
+                unset(self::$instances[$key]);
+            });
+        }
+        if (!isset(self::$instances[$key])) {
+            $pdo = self::$_pdo;
+            if ($pdo instanceof Closure) {
+                $pdo = call_user_func($pdo);
+            }
+            self::$instances[$key] = new Db(['database_type' => 'mysql', 'pdo' => $pdo]);
+        }
+        return self::$instances[$key];
+    }
+
+    public static function getTablePrefix(): string
+    {
+        return self::$tablePrefix;
     }
 }

@@ -15,7 +15,7 @@ class User extends Base
 
     public function getByIds($ids)
     {
-        return $ids ? $this->db->select(self::table(), '*', ['id' => $ids]) : [];
+        return $ids ? $this->db()->select(self::table(), '*', ['id' => $ids]) : [];
     }
 
     /**
@@ -29,17 +29,17 @@ class User extends Base
 
     public function getById($id)
     {
-        return $this->db->get(self::table(), '*', ['id' => $id]);
+        return $this->db()->get(self::table(), '*', ['id' => $id]);
     }
 
     public function getByUserName($username)
     {
-        return $this->db->get(self::table(), "*", ['username' => $username]);
+        return $this->db()->get(self::table(), "*", ['username' => $username]);
     }
 
     public function loginUpdate(int $id, $ip)
     {
-        return $this->db->update(
+        return $this->db()->update(
             self::table(),
             [
                 'last_login_ip'   => $ip,
@@ -51,7 +51,7 @@ class User extends Base
 
     public function getAll()
     {
-        return $this->db->select(self::table(), '*');
+        return $this->db()->select(self::table(), '*');
     }
 
     public function getUserAuth($id)
@@ -73,7 +73,7 @@ class User extends Base
         if (empty($groupIds)) {
             return [];
         }
-        return $this->db->select(UserGroup::table(), '*', ['id' => $groupIds]);
+        return $this->db()->select(UserGroup::table(), '*', ['id' => $groupIds]);
     }
 
     public function getUserMenu($id)
@@ -82,7 +82,7 @@ class User extends Base
         if (empty($auths)) {
             return [];
         }
-        $menuIds = $this->db->select(
+        $menuIds = $this->db()->select(
             MenuRelate::table(),
             'admin_menu_id',
             ['admin_auth_id' => array_column($auths, 'id')]
@@ -90,7 +90,7 @@ class User extends Base
         if (empty($menuIds)) {
             return [];
         }
-        return $this->db->select(Menu::table(), '*', ['id' => $menuIds]);
+        return $this->db()->select(Menu::table(), '*', ['id' => $menuIds]);
     }
 
     public function getUserRequest($id)
@@ -100,7 +100,7 @@ class User extends Base
             return [];
         }
 
-        $requestIds = $this->db->select(
+        $requestIds = $this->db()->select(
             RequestRelate::table(), '
             admin_request_id',
             ['admin_auth_id' => array_column($auths, 'id')]
@@ -108,12 +108,12 @@ class User extends Base
         if (empty($requestIds)) {
             return [];
         }
-        return $this->db->select(Request::table(), '*', ['id' => $requestIds]);
+        return $this->db()->select(Request::table(), '*', ['id' => $requestIds]);
     }
 
     public function delete($id)
     {
-        $this->db->delete(self::table(), ['id' => $id]);
-        $this->db->delete(UserRelate::table(), ['admin_user_id' => $id]);
+        $this->db()->delete(self::table(), ['id' => $id]);
+        $this->db()->delete(UserRelate::table(), ['admin_user_id' => $id]);
     }
 }

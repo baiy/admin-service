@@ -2,31 +2,36 @@
 
 namespace Baiy\Cadmin;
 
+use Psr\Http\Message\ServerRequestInterface;
+
 class Request
 {
-    /** @var string 客户端ip */
-    private $clientIp = "";
-    /** @var string 请求方法 */
-    private $method = "";
-    /** @var string 请求完整url */
-    private $url = "";
-    /** @var array 请求数据 */
-    private $input = [];
+    /** @var ServerRequestInterface */
+    private $serverRequest;
+
+    public function __construct(ServerRequestInterface $request)
+    {
+        $this->serverRequest = $request;
+    }
 
     /**
      * @return string
      */
-    public function clientIp(): string
+    public function ip(): string
     {
-        return $this->clientIp;
-    }
-
-    /**
-     * @param  string  $clientIp
-     */
-    public function setClientIp(string $clientIp): void
-    {
-        $this->clientIp = $clientIp;
+        $server = array_change_key_case($this->serverRequest->getServerParams(), CASE_UPPER);
+        if (isset($server['SERVER_NAME'])) {
+            return gethostbyname($server['SERVER_NAME']);
+        }
+        $ip = "";
+        if (isset($server)) {
+            if (isset($server['SERVER_ADDR'])) {
+                $ip = $server['SERVER_ADDR'];
+            } elseif (isset($server['LOCAL_ADDR'])) {
+                $ip = $server['LOCAL_ADDR'];
+            }
+        }
+        return $ip ?: "";
     }
 
     /**
@@ -34,15 +39,7 @@ class Request
      */
     public function method(): string
     {
-        return $this->method;
-    }
-
-    /**
-     * @param  string  $method
-     */
-    public function setMethod(string $method): void
-    {
-        $this->method = $method;
+        return $this->serverRequest->getMethod();
     }
 
     /**
@@ -50,40 +47,40 @@ class Request
      */
     public function url(): string
     {
-        return $this->url;
-    }
-
-    /**
-     * @param  string  $url
-     */
-    public function setUrl(string $url): void
-    {
-        $this->url = $url;
+        $server = array_change_key_case($this->serverRequest->getServerParams(), CASE_UPPER);
+        $url    = 'http';
+        if (isset($server["HTTPS"]) && $server["HTTPS"] == "on") {
+            $url .= "s";
+        }
+        $url .= "://";
+        if (isset($server["SERVER_PORT"]) && $server["SERVER_PORT"] != "80") {
+            $url .= $server["SERVER_NAME"].":".$server["SERVER_PORT"].$server["REQUEST_URI"];
+        } else {
+            $url .= $server["SERVER_NAME"].$server["REQUEST_URI"];
+        }
+        return $url;
     }
 
     public function input($key = "", $default = null)
     {
-        if (!$key) {
-            return $this->input;
-        }
-        return isset($this->input[$key]) ? $this->input[$key] : $default;
-    }
+        $input = array_merge(
+            $this->serverRequest->getQueryParams(),
+            $this->serverRequest->getParsedBody()
+        );
 
-    /**
-     * @param  array  $input
-     */
-    public function setInput(array $input): void
-    {
-        $this->input = $input;
+        if (!$key) {
+            return $input;
+        }
+        return isset($input[$key]) ? $input[$key] : $default;
     }
 
     public function toArray()
     {
         return [
-            'clientIp' => $this->clientIp,
-            'method'   => $this->method,
-            'url'      => $this->url,
-            'input'    => $this->input,
+            'clientIp' => $this->ip(),
+            'method'   => $this->method(),
+            'url'      => $this->url(),
+            'input'    => $this->input(),
         ];
     }
 }

@@ -8,32 +8,22 @@ use Baiy\Cadmin\Password\Password;
 use Baiy\Cadmin\Password\PasswrodDefault;
 use Closure;
 use PDO;
+use Psr\Http\Message\ServerRequestInterface;
 
 class Admin
 {
-    use Instance;
     private $inputActionName = "_action";
     private $inputTokenName = "_token";
     /** @var array 无需登录请求ID */
     private $noCheckLoginRequestIds = [1];
     /** @var array 仅需登录请求ID */
     private $onlyLoginRequestIds = [2, 3, 4];
-    /** @var Closure 日志记录回调函数 */
-    private $logCallback = null;
-    /** @var string 内置数据表前缀 */
-    private $tablePrefix = "admin_";
     /** @var Dispatch[] 请求调度器 */
     private $dispatchers = [];
-    /** @var Context 请求处理上下文对象 */
-    private $context;
     /** @var Password 密码生成对象 */
     private $password;
-    /** @var PDO 数据库操作对象 */
-    private $pdo;
-    /** @var Request 请求对象 */
-    private $request;
 
-    private function __construct()
+    public function __construct()
     {
         // 注册系统默认调用器
         $this->registerDispatcher(new Dispatcher());
@@ -42,21 +32,19 @@ class Admin
     }
 
     // 运行入口
-    public function run()
+    public function run(ServerRequestInterface $request)
     {
-        // 初始化上下文对象
-        $this->context = (new Context($this));
-        return $this->context->run();
+        return (new Context($request, $this))->run();
     }
 
-    public function setPdo(PDO $pdo)
+    /**
+     * 设置数据库对象
+     * @param  PDO|Closure  $pdo
+     * @param  string  $tablePrefix  内置数据表前缀
+     */
+    public function db($pdo, $tablePrefix = "")
     {
-        $this->pdo = $pdo;
-    }
-
-    public function getPdo()
-    {
-        return $this->pdo;
+        Db::initialize($pdo, $tablePrefix ?: "admin_");
     }
 
     public function addNoCheckLoginRequestId(int $id): void
@@ -77,29 +65,6 @@ class Admin
     public function getOnlyLoginRequestIds(): array
     {
         return $this->onlyLoginRequestIds;
-    }
-
-    public function setLogCallback(Closure $callback): void
-    {
-        $this->logCallback = $callback;
-    }
-
-    public function log(Log $log)
-    {
-        if ($this->logCallback instanceof Closure) {
-            $callback = $this->logCallback;
-            $callback($log);
-        }
-    }
-
-    public function setTablePrefix(string $prefix): void
-    {
-        $this->tablePrefix = $prefix;
-    }
-
-    public function getTablePrefix(): string
-    {
-        return $this->tablePrefix;
     }
 
     public function registerDispatcher(Dispatch $dispatcher)
@@ -131,11 +96,6 @@ class Admin
     public function getPassword(): Password
     {
         return $this->password;
-    }
-
-    public function getContext(): Context
-    {
-        return $this->context;
     }
 
     /**

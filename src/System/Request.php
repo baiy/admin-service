@@ -2,7 +2,6 @@
 
 namespace Baiy\Cadmin\System;
 
-use Baiy\Cadmin\Admin;
 use Baiy\Cadmin\Dispatch\Dispatch;
 use Baiy\Cadmin\Model\Auth;
 use Baiy\Cadmin\Model\Request as RequestModel;
@@ -67,6 +66,6 @@ class Request extends Base
                 'name'        => $dispatcher->name(),
                 'description' => $dispatcher->description(),
             ];
-        }, Admin::instance()->allDispatcher()));
+        }, $this->context->getAdmin()->allDispatcher()));
     }
 }

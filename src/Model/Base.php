@@ -2,16 +2,12 @@
 
 namespace Baiy\Cadmin\Model;
 
-use Baiy\Cadmin\Admin;
 use Baiy\Cadmin\Db;
 
 abstract class Base
 {
-    /** @var Db */
-    public $db;
-
-    public function __construct()
+    public function db()
     {
-        $this->db = Admin::instance()->getContext()->getDb();
+        return Db::instance();
     }
 }

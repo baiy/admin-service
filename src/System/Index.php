@@ -2,8 +2,6 @@
 
 namespace Baiy\Cadmin\System;
 
-use Baiy\Cadmin\Admin;
-use Baiy\Cadmin\Helper;
 use Baiy\Cadmin\Model\Token;
 use Baiy\Cadmin\Model\User;
 use Exception;
@@ -20,7 +18,7 @@ class Index extends Base
         if (empty($user)) {
             throw new Exception("用户不存在");
         }
-        if (!Admin::instance()->getPassword()->verify($password, $user['password'])) {
+        if (!$this->context->getAdmin()->getPassword()->verify($password, $user['password'])) {
             throw new Exception("密码错误");
         }
 
@@ -31,14 +29,14 @@ class Index extends Base
         $token = Token::instance()->addToken($user['id']);
 
         // 用户登录更新
-        User::instance()->loginUpdate($user['id'], Helper::ip());
+        User::instance()->loginUpdate($user['id'], $this->context->getRequest()->ip());
 
         return ['token' => $token];
     }
 
     public function logout()
     {
-        $token = $this->context->getRequest()->input(Admin::instance()->getInputTokenName());
+        $token = $this->context->getRequest()->input($this->context->getAdmin()->getInputTokenName());
         if (!empty($token)) {
             Token::instance()->deleteToken($token);
         }

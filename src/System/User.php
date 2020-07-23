@@ -2,7 +2,6 @@
 
 namespace Baiy\Cadmin\System;
 
-use Baiy\Cadmin\Admin;
 use Baiy\Cadmin\Model\User as UserModel;
 use Exception;
 
@@ -26,7 +25,7 @@ class User extends Base
         ];
     }
 
-    public function save($username, $status,$description = "", $password = "", $id = 0)
+    public function save($username, $status, $description = "", $password = "", $id = 0)
     {
         if (empty($username)) {
             throw new Exception("用户名不能为空");
@@ -43,22 +42,22 @@ class User extends Base
         if ($id) {
             $this->db->update(
                 UserModel::table(),
-                compact('username', 'status','description'),
+                compact('username', 'status', 'description'),
                 compact('id')
             );
             if (!empty($password)) {
                 $this->db->update(
                     UserModel::table(),
-                    ['password' => Admin::instance()->getPassword()->hash($password)],
+                    ['password' => $this->context->getAdmin()->getPassword()->hash($password)],
                     compact('id')
                 );
             }
         } else {
             $this->db->insert(UserModel::table(), [
-                'username' => $username,
-                'status'   => $status,
-                'description'   => $description,
-                'password' => Admin::instance()->getPassword()->hash($password),
+                'username'    => $username,
+                'status'      => $status,
+                'description' => $description,
+                'password'    => $this->context->getAdmin()->getPassword()->hash($password),
             ]);
         }
     }
@@ -79,7 +78,7 @@ class User extends Base
             if ($password != $repeatPassword) {
                 throw new Exception("两次输入密码不一致");
             }
-            $update['password'] = Admin::instance()->getPassword()->hash($password);
+            $update['password'] = $this->context->getAdmin()->getPassword()->hash($password);
         }
         $this->db->update(
             UserModel::table(),

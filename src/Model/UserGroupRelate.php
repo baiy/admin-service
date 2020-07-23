@@ -14,7 +14,7 @@ class UserGroupRelate extends Base
         if (empty($userGroupIds) || empty($authIds)) {
             return false;
         }
-        $existAuthIds = $this->db->select(self::table(), 'admin_auth_id', [
+        $existAuthIds = $this->db()->select(self::table(), 'admin_auth_id', [
             'admin_user_group_id' => $userGroupIds
         ]);
         if (empty($existAuthIds)) {
@@ -26,14 +26,14 @@ class UserGroupRelate extends Base
 
     public function authIds($id)
     {
-        return $this->db->select(self::table(), 'admin_auth_id', [
+        return $this->db()->select(self::table(), 'admin_auth_id', [
             'admin_user_group_id' => $id
         ]) ?: [];
     }
 
     public function userGroupIds($id)
     {
-        return $this->db->select(self::table(), 'admin_user_group_id', [
+        return $this->db()->select(self::table(), 'admin_user_group_id', [
             'admin_auth_id' => $id
         ]) ?: [];
     }

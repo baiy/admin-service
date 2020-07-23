@@ -2,7 +2,6 @@
 
 namespace Baiy\Cadmin\System;
 
-use Baiy\Cadmin\Admin;
 use Baiy\Cadmin\Model\Auth as AuthModel;
 use Baiy\Cadmin\Model\Menu;
 use Baiy\Cadmin\Model\MenuRelate;
@@ -77,8 +76,8 @@ class Auth extends Base
         }
         $where['id[!]'] = array_merge(
             $this->db->select(RequestRelate::table(), 'admin_request_id', ['admin_auth_id' => $id]),
-            Admin::instance()->getOnlyLoginRequestIds(), // 过滤无需分配的请求
-            Admin::instance()->getNoCheckLoginRequestIds() // 过滤无需分配的请求
+            $this->context->getAdmin()->getOnlyLoginRequestIds(), // 过滤无需分配的请求
+            $this->context->getAdmin()->getNoCheckLoginRequestIds() // 过滤无需分配的请求
         );
 
         list($noAssign, $total) = $this->page(Request::table(), $where, ['id' => 'DESC']);
